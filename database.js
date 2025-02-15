@@ -73,6 +73,45 @@ class Database {
         });
     }
 
+    getActiveFeeds() {
+        return new Promise((resolve, reject) => {
+            this.db.all(
+                'SELECT * FROM feeds WHERE active = 1',
+                [],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows);
+                }
+            );
+        });
+    }
+
+    addSubscription(chatId, feedId) {
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                'INSERT INTO subscriptions (chat_id, feed_id) VALUES (?, ?)',
+                [chatId, feedId],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(this.lastID);
+                }
+            );
+        });
+    }
+
+    saveItem(feedId, guid, title, link, pubDate, content) {
+        return new Promise((resolve, reject) => {
+            this.db.run(
+                'INSERT OR IGNORE INTO items (feed_id, guid, title, link, pub_date, content) VALUES (?, ?, ?, ?, ?, ?)',
+                [feedId, guid, title, link, pubDate, content],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(this.lastID);
+                }
+            );
+        });
+    }
+
     close() {
         this.db.close((err) => {
             if (err) {
