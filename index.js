@@ -19,7 +19,36 @@ class RSSBotApp {
     }
 
     async checkFeeds() {
-        console.log('Feed check started');
+        try {
+            const feeds = await this.db.getActiveFeeds();
+            console.log(`Checking ${feeds.length} feeds...`);
+            
+            for (const feed of feeds) {
+                await this.processFeed(feed);
+            }
+        } catch (error) {
+            console.error('Error checking feeds:', error);
+        }
+    }
+
+    async processFeed(feed) {
+        try {
+            const feedData = await this.parser.parseFeed(feed.url);
+            console.log(`Processing ${feedData.title} - ${feedData.items.length} items`);
+            
+            for (const item of feedData.items) {
+                await this.db.saveItem(
+                    feed.id,
+                    item.guid || item.link,
+                    item.title,
+                    item.link,
+                    item.pubDate,
+                    item.content
+                );
+            }
+        } catch (error) {
+            console.error(`Error processing feed ${feed.url}:`, error);
+        }
     }
 }
 
